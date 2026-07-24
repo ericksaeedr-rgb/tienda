@@ -1,141 +1,122 @@
-/* ==========================================================================
-   APP STATE & INITIAL DATA
-   ========================================================================== */
+const STORAGE_KEY = 'catalogo-productos-v1';
+const productForm = document.getElementById('productForm');
+const productNameInput = document.getElementById('productName');
+const productPriceInput = document.getElementById('productPrice');
+const productCategoryInput = document.getElementById('productCategory');
+const productDescInput = document.getElementById('productDesc');
+const productImageInput = document.getElementById('productImage');
+const imageFileName = document.getElementById('imageFileName');
+const imagePreview = document.getElementById('imagePreview');
+const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+const productsGrid = document.getElementById('productsGrid');
+const productsCount = document.getElementById('productsCount');
+const pdfDate = document.getElementById('pdfDate');
+const pdfProductsList = document.getElementById('pdfProductsList');
+const pdfTemplate = document.getElementById('pdfTemplate');
+const downloadPdfBtn = document.getElementById('downloadPdfBtn');
 
-// Safe solid SVG placeholders encoded for local use (CORS safe, no internet required)
-const DEFAULT_PRODUCTS = [
-    {
-        id: "prod-1",
-        name: "Mochila Voyager Tech",
-        description: "Mochila impermeable con compartimento acolchado para laptop de 16 pulgadas y puerto de carga USB.",
-        price: 45000,
-        category: "Accesorios",
-        image: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJz48cmVjdCB3aWR0aD0nMTAwJyBoZWlnaHQ9JzEwMCcgZmlsbD0nIzYzNjZmMScvPjx0ZXh0IHg9JzUwJScgeT0nNTUlJyBmaWxsPSd3aGl0ZScgZm9udC1mYW1pbHk9J3NhbnMtc2VyaWYnIGZvbnQtc2l6ZT0nMTEnIGZvbnQtd2VpZ2h0PSdib2xkJyB0ZXh0LWFuY2hvcj0nbWlkZGxlJz5Nb2NoaWxhPC90ZXh0Pjwvc3ZnPg=="
-    },
-    {
-        id: "prod-2",
-        name: "Audífonos ANC Studio Pro",
-        description: "Audífonos inalámbricos de diadema con cancelación activa de ruido híbrida y autonomía de 40 horas.",
-        price: 75000,
-        category: "Electrónica",
-        image: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJz48cmVjdCB3aWR0aD0nMTAwJyBoZWlnaHQ9JzEwMCcgZmlsbD0nIzEwYjk4MScvPjx0ZXh0IHg9JzUwJScgeT0nNTUlJyBmaWxsPSd3aGl0ZScgZm9udC1mYW1pbHk9J3NhbnMtc2VyaWYnIGZvbnQtc2l6ZT0nMTEnIGZvbnQtd2VpZ2h0PSdib2xkJyB0ZXh0LWFuY2hvcj0nbWlkZGxlJz5BdWRpZm9ub3M8L3RleHQ+PC9zdmc+"
-    },
-    {
-        id: "prod-3",
-        name: "Reloj Cronógrafo Stellar",
-        description: "Reloj de pulsera con movimiento de cuarzo japonés, correa de cuero genuino y resistencia al agua.",
-        price: 92000,
-        category: "Accesorios",
-        image: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJz48cmVjdCB3aWR0aD0nMTAwJyBoZWlnaHQ9JzEwMCcgZmlsbD0nI2Y1OWUwYicvPjx0ZXh0IHg9JzUwJScgeT0nNTUlJyBmaWxsPSd3aGl0ZScgZm9udC1mYW1pbHk9J3NhbnMtc2VyaWYnIGZvbnQtc2l6ZT0nMTEnIGZvbnQtd2VpZ2h0PSdib2xkJyB0ZXh0LWFuY2hvcj0nbWlkZGxlJz5SZWxvajwvdGV4dD48L3N2Zz4="
-    }
-];
+let products = loadProducts();
+let currentImageDataUrl = '';
 
-let products = [];
-let tempProductImageBase64 = "";
-
-// ==========================================================================
-// DOM ELEMENTS CACHE
-// ==========================================================================
-const DOM = {
-    // Form Inputs
-    productForm: document.getElementById('productForm'),
-    productName: document.getElementById('productName'),
-    productPrice: document.getElementById('productPrice'),
-    productCategory: document.getElementById('productCategory'),
-    productDesc: document.getElementById('productDesc'),
-    productImage: document.getElementById('productImage'),
-    imageFileName: document.getElementById('imageFileName'),
-    imagePreviewContainer: document.getElementById('imagePreviewContainer'),
-    imagePreview: document.getElementById('imagePreview'),
-    
-    // Catalog Views
-    productsCount: document.getElementById('productsCount'),
-    productsGrid: document.getElementById('productsGrid'),
-    downloadPdfBtn: document.getElementById('downloadPdfBtn'),
-    
-    // PDF elements
-    pdfTemplate: document.getElementById('pdfTemplate'),
-    pdfDate: document.getElementById('pdfDate'),
-    pdfProductsList: document.getElementById('pdfProductsList')
-};
-
-// ==========================================================================
-// PERSISTENCE & UTILITIES
-// ==========================================================================
-
-const loadStoreData = () => {
+function loadProducts() {
     try {
-        const storedProducts = localStorage.getItem('ultra_offline_products');
-        if (storedProducts) {
-            products = JSON.parse(storedProducts);
-        } else {
-            products = DEFAULT_PRODUCTS;
-            localStorage.setItem('ultra_offline_products', JSON.stringify(products));
-        }
-    } catch (e) {
-        console.error("Localstorage load error.", e);
-        products = DEFAULT_PRODUCTS;
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return saved ? JSON.parse(saved) : [];
+    } catch (error) {
+        console.warn('No se pudieron cargar los productos:', error);
+        return [];
     }
-};
+}
 
-const saveProducts = () => {
-    localStorage.setItem('ultra_offline_products', JSON.stringify(products));
-    renderCatalog();
-};
+function saveProducts() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+}
 
-// Costa Rican Colón Formatter (₡)
-const formatPrice = (price) => {
-    return `₡${Number(price).toLocaleString('es-CR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-};
+function init() {
+    productForm.addEventListener('submit', handleSubmit);
+    productImageInput.addEventListener('change', handleImageSelection);
+    downloadPdfBtn.addEventListener('click', exportCatalogToPdf);
+    render();
+}
 
-// Canvas local file compressor to avoid storage limit issues
-const handleImageCompression = (file, maxWidth, maxHeight, callback) => {
+function handleImageSelection(event) {
+    const file = event.target.files[0];
+
+    if (!file) {
+        resetImagePreview();
+        return;
+    }
+
+    imageFileName.textContent = file.name;
+
     const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target.result;
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            let width = img.width;
-            let height = img.height;
-            
-            if (width > height) {
-                if (width > maxWidth) {
-                    height = Math.round((height * maxWidth) / width);
-                    width = maxWidth;
-                }
-            } else {
-                if (height > maxHeight) {
-                    width = Math.round((width * maxHeight) / height);
-                    height = maxHeight;
-                }
-            }
-            
-            canvas.width = width;
-            canvas.height = height;
-            
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-            
-            // Output as compressed JPEG
-            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-            callback(compressedBase64);
-        };
+    reader.onload = function () {
+        currentImageDataUrl = reader.result;
+        imagePreview.src = reader.result;
+        imagePreviewContainer.style.display = 'block';
     };
-};
 
-// ==========================================================================
-// RENDERING
-// ==========================================================================
+    reader.readAsDataURL(file);
+}
 
-const renderCatalog = () => {
-    DOM.productsCount.innerText = `${products.length} productos`;
+function resetImagePreview() {
+    currentImageDataUrl = '';
+    imagePreview.removeAttribute('src');
+    imagePreviewContainer.style.display = 'none';
+    imageFileName.textContent = 'Sin archivo';
+    productImageInput.value = '';
+}
 
-    if (products.length === 0) {
-        DOM.productsGrid.innerHTML = `
+function handleSubmit(event) {
+    event.preventDefault();
+
+    const name = productNameInput.value.trim();
+    const price = Number(productPriceInput.value);
+    const category = productCategoryInput.value.trim();
+    const description = productDescInput.value.trim();
+
+    if (!name || !category || !description || !productPriceInput.value) {
+        alert('Completa todos los campos del producto antes de guardar.');
+        return;
+    }
+
+    if (!Number.isFinite(price) || price <= 0) {
+        alert('El precio debe ser un número mayor a cero.');
+        return;
+    }
+
+    const newProduct = {
+        id: crypto.randomUUID ? crypto.randomUUID() : `product-${Date.now()}`,
+        name,
+        price,
+        category,
+        description,
+        image: currentImageDataUrl
+    };
+
+    products.unshift(newProduct);
+    saveProducts();
+    render();
+    productForm.reset();
+    resetImagePreview();
+}
+
+function render() {
+    updateCount();
+    renderCatalog();
+    renderPdfTemplate();
+}
+
+function updateCount() {
+    const label = products.length === 1 ? 'producto' : 'productos';
+    productsCount.textContent = `${products.length} ${label}`;
+}
+
+function renderCatalog() {
+    if (!products.length) {
+        productsGrid.innerHTML = `
             <div class="empty-state">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 12H16c-.5 0-.9-.4-1-.9L13.4 6.6c-.1-.5-.6-.9-1.1-.9H11c-.5 0-.9.4-1.1.9L8.4 11.1c-.1.5-.5.9-1 .9H2.5"></path><path d="M22 13v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6"></path></svg>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 12H16c-.5 0-.9-.4-1-.9L13.4 6.6c-.1-.5-.6-.9-1.1-.9H11c-.5 0-.9.4-1.1.9L8.4 11.1c-.1.5-.9-.9-1 .9H2.5"></path><path d="M22 13v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6"></path></svg>
                 <h3>El catálogo está vacío</h3>
                 <p>Usa el formulario lateral para añadir productos.</p>
             </div>
@@ -143,195 +124,143 @@ const renderCatalog = () => {
         return;
     }
 
-    DOM.productsGrid.innerHTML = products.map(p => `
-        <div class="product-card">
+    productsGrid.innerHTML = products.map((product) => `
+        <article class="product-card">
             <div class="card-img-holder">
-                ${p.image ? `<img src="${p.image}" alt="${p.name}">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-muted);"><i class="fa-solid fa-image" style="font-size:2rem"></i></div>`}
-                <span class="card-category">${p.category}</span>
+                ${product.image ? `<img src="${product.image}" alt="${escapeHtml(product.name)}">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#94a3b8;">Sin imagen</div>'}
+                <span class="card-category">${escapeHtml(product.category)}</span>
             </div>
             <div class="card-body">
-                <h4 class="card-title" title="${p.name}">${p.name}</h4>
-                <p class="card-desc">${p.description}</p>
+                <h4 class="card-title">${escapeHtml(product.name)}</h4>
+                <p class="card-desc">${escapeHtml(product.description)}</p>
                 <div class="card-footer">
-                    <span class="card-price">${formatPrice(p.price)}</span>
-                    <button class="btn-delete" data-id="${p.id}" title="Eliminar Producto">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    <span class="card-price">₡${formatPrice(product.price)}</span>
+                    <button type="button" class="btn-delete" data-id="${product.id}" aria-label="Eliminar producto">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                     </button>
                 </div>
             </div>
-        </div>
+        </article>
     `).join('');
 
-    // Attach delete handlers
-    document.querySelectorAll('.btn-delete').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const id = btn.getAttribute('data-id');
-            deleteProduct(id);
-        });
+    productsGrid.querySelectorAll('.btn-delete').forEach((button) => {
+        button.addEventListener('click', () => deleteProduct(button.getAttribute('data-id')));
     });
-};
+}
 
-// ==========================================================================
-// CORE CRUD ACTIONS
-// ==========================================================================
-
-const handleFormSubmit = (e) => {
-    e.preventDefault();
-    
-    const name = DOM.productName.value.trim();
-    const price = parseFloat(DOM.productPrice.value);
-    const category = DOM.productCategory.value.trim();
-    const description = DOM.productDesc.value.trim();
-    
-    let imageSrc = tempProductImageBase64;
-    
-    // Default placeholder SVG if no image is uploaded (encoded to Base64 to prevent canvas issues)
-    if (!imageSrc) {
-        const randomColorHexs = ['#6366f1', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
-        const randColor = randomColorHexs[Math.floor(Math.random() * randomColorHexs.length)];
-        const svgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="${randColor}"/><text x="50%" y="55%" fill="white" font-family="sans-serif" font-size="10" font-weight="bold" text-anchor="middle">${category.substring(0, 10)}</text></svg>`;
-        imageSrc = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgString)))}`;
-    }
-    
-    const newProduct = {
-        id: 'prod-' + Date.now(),
-        name,
-        price,
-        category,
-        description,
-        image: imageSrc
-    };
-    
-    products.push(newProduct);
+function deleteProduct(productId) {
+    products = products.filter((product) => product.id !== productId);
     saveProducts();
-    resetForm();
-};
+    render();
+}
 
-const deleteProduct = (id) => {
-    if (confirm("¿Deseas eliminar este producto del catálogo?")) {
-        products = products.filter(p => p.id !== id);
-        saveProducts();
-    }
-};
-
-const resetForm = () => {
-    DOM.productForm.reset();
-    DOM.imagePreviewContainer.style.display = "none";
-    DOM.imageFileName.innerText = "Sin archivo";
-    tempProductImageBase64 = "";
-};
-
-// ==========================================================================
-// OFFLINE PDF GENERATOR
-// ==========================================================================
-
-const exportCatalogPdf = () => {
-    // Check if local html2pdf library was loaded successfully
-    if (typeof html2pdf === 'undefined') {
-        alert("Error de conexión local: No se encontró la librería 'html2pdf.bundle.min.js' en la carpeta del proyecto. Por favor, verifica que el archivo descargado se encuentre junto a index.html.");
-        return;
-    }
-
-    if (products.length === 0) {
-        alert("El catálogo está vacío. Agrega productos antes de exportar.");
-        return;
-    }
-
-    // Set Dynamic Date
-    DOM.pdfDate.innerText = new Date().toLocaleDateString('es-CR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+function renderPdfTemplate() {
+    const currentDate = new Date();
+    pdfDate.textContent = currentDate.toLocaleDateString('es-CR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
     });
 
-    // Populate PDF List Elements
-    DOM.pdfProductsList.innerHTML = products.map(p => {
-        // If image exists, render it. If not, render a text-based safe placeholder "Sin Foto" to prevent blank pages or CORS SVG errors.
-        const imageHtml = p.image 
-            ? `<img src="${p.image}" class="pdf-row-img">` 
-            : `<div class="pdf-row-img" style="display:flex;align-items:center;justify-content:center;background-color:#f1f5f9;color:#94a3b8;font-size:0.65rem;font-weight:bold;">Sin Foto</div>`;
-            
-        return `
-            <div class="pdf-row-item">
-                ${imageHtml}
-                <div class="pdf-row-body">
-                    <div class="pdf-row-top">
-                        <h4 class="pdf-row-name">${p.name}</h4>
-                        <span class="pdf-row-cat">${p.category}</span>
+    if (!products.length) {
+        pdfProductsList.innerHTML = '<p class="pdf-empty">No hay productos para mostrar.</p>';
+        return;
+    }
+
+    pdfProductsList.innerHTML = products.map((product) => `
+        <div class="pdf-row-item">
+            ${product.image ? `<img class="pdf-row-img" src="${product.image}" alt="${escapeHtml(product.name)}">` : '<div class="pdf-row-img pdf-row-img-placeholder">Sin imagen</div>'}
+            <div class="pdf-row-body">
+                <div class="pdf-row-top">
+                    <div style="min-width:0;">
+                        <div class="pdf-row-name">${escapeHtml(product.name)}</div>
+                        <div class="pdf-row-cat">${escapeHtml(product.category)}</div>
                     </div>
-                    <p class="pdf-row-desc">${p.description}</p>
-                    <span class="pdf-row-price">${formatPrice(p.price)}</span>
+                    <div class="pdf-row-price">₡${formatPrice(product.price)}</div>
                 </div>
+                <div class="pdf-row-desc">${escapeHtml(product.description)}</div>
             </div>
-        `;
-    }).join('');
+        </div>
+    `).join('');
+}
 
-    // Clone the PDF template element to avoid showing it on-screen and to prevent z-index/fixed bugs
-    const originalPdfEl = DOM.pdfTemplate;
-    const pdfClone = originalPdfEl.cloneNode(true);
-    
-    // Style the clone so it's fully visible/layouted by the browser but positioned off-screen
-    pdfClone.style.display = "block";
-    pdfClone.style.position = "absolute";
-    pdfClone.style.left = "-9999px";
-    pdfClone.style.top = "0";
-    pdfClone.style.visibility = "visible";
-    pdfClone.style.opacity = "1";
-    
-    // Append to body so html2pdf can access its styles and scroll boundaries
-    document.body.appendChild(pdfClone);
+function exportCatalogToPdf() {
+    if (!products.length) {
+        alert('Agrega al menos un producto para generar el PDF.');
+        return;
+    }
 
-    const opt = {
-        margin:       10,
-        filename:     'Catalogo-Productos-CR.pdf',
-        image:        { type: 'jpeg', quality: 0.95 },
-        html2canvas:  { scale: 2, useCORS: true, logging: false },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
+    renderPdfTemplate();
+    showPdfPreview();
 
-    // Run compiler on the cloned element, and clean it up afterwards
-    html2pdf().from(pdfClone).set(opt).save().then(() => {
-        // Remove the clone from the DOM
-        pdfClone.remove();
-    }).catch(err => {
-        console.error("PDF engine crash", err);
-        pdfClone.remove();
-        alert("Ocurrió un error inesperado al compilar el PDF de forma local.");
-    });
-};
-
-// ==========================================================================
-// INITIALIZATION
-// ==========================================================================
-
-const init = () => {
-    loadStoreData();
-    renderCatalog();
-
-    // Listeners
-    DOM.productForm.addEventListener('submit', handleFormSubmit);
-    DOM.downloadPdfBtn.addEventListener('click', exportCatalogPdf);
-
-    DOM.productImage.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            DOM.imageFileName.innerText = file.name;
-            // Compress image to save localstorage memory
-            handleImageCompression(file, 400, 400, (base64) => {
-                tempProductImageBase64 = base64;
-                DOM.imagePreview.src = base64;
-                DOM.imagePreviewContainer.style.display = "block";
+    if (window.html2pdf) {
+        window.html2pdf()
+            .set({
+                margin: [0.2, 0.2, 0.2, 0.2],
+                filename: `catalogo-${Date.now()}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, logging: false },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+            })
+            .from(pdfTemplate)
+            .save()
+            .finally(() => {
+                hidePdfPreview();
             });
-        }
-    });
+        return;
+    }
 
-    // Handle file trigger button click
-    document.querySelectorAll('.btn-upload-trigger').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const input = e.currentTarget.parentElement.querySelector('input[type="file"]');
-            if (input) input.click();
-        });
-    });
-};
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    script.onload = function () {
+        window.html2pdf()
+            .set({
+                margin: [0.2, 0.2, 0.2, 0.2],
+                filename: `catalogo-${Date.now()}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, logging: false },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+            })
+            .from(pdfTemplate)
+            .save()
+            .finally(() => {
+                hidePdfPreview();
+            });
+    };
+    script.onerror = function () {
+        window.print();
+        setTimeout(hidePdfPreview, 1200);
+    };
+    document.head.appendChild(script);
+}
 
-window.addEventListener('DOMContentLoaded', init);
+function showPdfPreview() {
+    document.body.classList.add('pdf-export-active');
+    pdfTemplate.style.display = 'block';
+    pdfTemplate.style.position = 'relative';
+    pdfTemplate.style.left = 'auto';
+    pdfTemplate.style.margin = '0 auto';
+}
+
+function hidePdfPreview() {
+    document.body.classList.remove('pdf-export-active');
+    pdfTemplate.style.display = 'none';
+}
+
+function formatPrice(value) {
+    return Number(value).toLocaleString('es-CR', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    });
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+}
+
+document.addEventListener('DOMContentLoaded', init);
