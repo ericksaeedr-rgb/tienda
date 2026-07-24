@@ -443,8 +443,10 @@ button, input, textarea {
     color: #0f172a;
     padding: 24px;
     font-family: var(--font-stack);
-    width: 680px; /* A4 width */
+    width: 680px;
+    max-width: 100%;
     margin: 0 auto;
+    box-shadow: none;
 }
 
 .pdf-print-header {
@@ -481,15 +483,27 @@ button, input, textarea {
     border: 1px solid #e2e8f0;
     border-radius: var(--radius-sm);
     overflow: hidden;
-    height: 80px;
+    min-height: 84px;
     page-break-inside: avoid;
+    break-inside: avoid;
 }
 
 .pdf-row-img {
-    width: 80px;
-    height: 80px;
+    width: 84px;
+    height: 84px;
     object-fit: cover;
     background-color: #f1f5f9;
+    flex-shrink: 0;
+}
+
+.pdf-row-img-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: #64748b;
+    text-align: center;
+    padding: 8px;
 }
 
 .pdf-row-body {
@@ -520,6 +534,8 @@ button, input, textarea {
     background-color: #e2e8f0;
     padding: 1px 4px;
     border-radius: 2px;
+    display: inline-block;
+    margin-top: 2px;
 }
 .pdf-row-desc {
     font-size: 0.68rem;
@@ -536,6 +552,7 @@ button, input, textarea {
     font-size: 0.85rem;
     font-weight: 700;
     margin-top: auto;
+    white-space: nowrap;
 }
 
 .pdf-print-footer {
@@ -547,6 +564,48 @@ button, input, textarea {
     align-items: center;
     font-size: 0.7rem;
     color: #64748b;
+}
+
+.pdf-empty {
+    padding: 16px;
+    border: 1px dashed #cbd5e1;
+    text-align: center;
+    color: #64748b;
+    border-radius: 6px;
+}
+
+body.pdf-export-active .app-container {
+    display: none !important;
+}
+
+body.pdf-export-active .pdf-print-container {
+    display: block !important;
+    position: relative;
+    left: auto;
+    top: auto;
+    width: 100%;
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    body.pdf-export-active .pdf-print-container,
+    body.pdf-export-active .pdf-print-container * {
+        visibility: visible;
+    }
+
+    body.pdf-export-active .pdf-print-container {
+        display: block !important;
+        position: static;
+        width: 100%;
+        max-width: none;
+        padding: 0;
+        box-shadow: none;
+    }
 }
 
 .no-print {
